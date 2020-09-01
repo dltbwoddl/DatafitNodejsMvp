@@ -1,8 +1,14 @@
 var firebase = require("firebase/app");
 const express = require('express')
-const app = express()
 var path = require('path');
+var bodyParser = require('body-parser')
 const { connected } = require("process");
+const { toNamespacedPath } = require("path");
+const app = express()
+app.use(bodyParser.urlencoded({ extended: false }));
+// var calendar = require("calenday/calendar_2.html")
+
+//달력 쪽 코드 이해하고 데이터 끌어와 표현하는 것까지 하기.
 
 // Add the Firebase products that you want to use
 require("firebase/auth");
@@ -21,6 +27,7 @@ const firebaseConfig = {
 
 // Initialize Firebase
 var name
+
 var delname
 var usersinformations = new Map()
 
@@ -56,6 +63,7 @@ app.get('/', (req, res) => {
     <title>Document</title>
 </head>
 <body>
+    <a href="/create">create</a>
     ${userlist}
 </body>
 </html>`
@@ -113,7 +121,7 @@ app.get('/userinformation/:username', (req, res) => {
 <title>Document</title>
 </head>
 <body>
-<a href="/userinformation/userexercisedata/${filteredId}">limyohan</a><br>
+<a href="/userinformation/userexercisedata/${filteredId}">${filteredId}</a><br>
 ${userinfotable}
 </body>
 </html>`
@@ -189,6 +197,69 @@ app.get('/userinformation/userexercisedata/:username/:date', (req, res) => {
 </html>`
             res.send(html)
         });
+});
+
+app.get('/create', (req, res) => {
+    var html = `
+    <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Document</title>
+</head>
+<body>
+    <form action='/create_process' method = 'post'>
+        name : <input type='text' name='name'><br>
+        age : <input type='text' name='age'><br>
+        sex : <input type='text' name='sex'><br>
+        height : <input type='text' name='height'><br>
+        weight : <input type='text' name='weight'><br>
+        muscle : <input type='text' name='muscle'><br>
+        fat : <input type='text' name='fat'><br>
+        submit : <input type="submit">
+    </form>
+</body>
+</html>`
+    res.send(html)
+});
+
+app.post('/create_process', (req, res) => {
+    var post = req.body;
+    var dateFormat = require('dateformat');
+    var now = new Date();
+    var today = dateFormat(now, "yyyy.m.dd")
+    var muscledata = {}
+    var fatdata = {}
+    muscledata[today]=post.muscle
+    fatdata[today]=post.fat
+
+    console.log(today)
+    var data = {
+        'name': post.name,
+        'age': post.age,
+        'sex': post.sex,
+        'height': post.height,
+        'weight': post.weight,
+        'muscle': muscledata,
+        'fat': fatdata
+    }
+    db.collection(`${post.name}`).doc("userinformation").set(
+        data
+    ).then(() => {
+        db.collection('name').doc('usernames').get().then((it, err) => {
+            console.log(it.data()['username']);
+            var usernames = it.data()['username']
+            usernames.push(post.name);
+            console.log(usernames);
+            db.collection('name').doc('usernames').update(
+                'username', usernames
+            ).then(() => {
+                res.redirect('/')
+            });
+        });
+    });
+
 });
 
 app.listen(300, () => {
