@@ -6,10 +6,19 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dltbwoddl/DatafitNodejsMvp.git"
+  },
   "author": "",
   "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/dltbwoddl/DatafitNodejsMvp/issues"
+  },
+  "homepage": "https://github.com/dltbwoddl/DatafitNodejsMvp#readme",
   "dependencies": {
+    "express": "^4.17.1",
     "firebase": "^7.19.1",
-    "firebase-admin": "^9.1.1"
+    "pug": "^3.0.0"
   }
 }
