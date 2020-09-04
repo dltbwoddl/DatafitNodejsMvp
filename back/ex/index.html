@@ -13,9 +13,7 @@
             -webkit-box-sizing: border-box;
             box-sizing: border-box;
         }
-        a{
-          color: aliceblue;
-        }
+        
         body {
             overflow: hidden;
             font-family: 'HelveticaNeue-UltraLight', 'Helvetica Neue UltraLight', 'Helvetica Neue', Arial, Helvetica, sans-serif;
@@ -526,9 +524,7 @@
 </head>
 
 <body>
-  <div id="calendar" style="width: available;"></div>
-  <div id="detail"></div>
-  <div id="plusex"></div>
+  <div id="calendar"></div>
   <!-- Insert these scripts at the bottom of the HTML, but before you use any Firebase services -->
 
   <!-- Firebase App (the core Firebase SDK) is always required and must be listed first -->
@@ -538,22 +534,7 @@
   <script src="https://www.gstatic.com/firebasejs/6.2.0/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/6.2.0/firebase-firestore.js"></script>
   <script>
-    var pathName = window.location.pathname.split('/')[2];
-    console.log("pathname", pathName)
-    var para = document.createElement("a")
-    var node = document.createTextNode(pathName);
-    para.href=`/userinformation/${pathName}`
-    para.appendChild(node);
-    var element = document.getElementById("detail");
-    element.appendChild(para);
-
-    var para = document.createElement("a")
-    var node = document.createTextNode('운동추가하기');
-    para.href=`/exercisedatacreat/${pathName}`
-    para.appendChild(node);
-    var element = document.getElementById("plusex");
-    element.appendChild(para);
-
+    // TODO: Replace the following with your app's Firebase project configuration
     var firebaseConfig = {
       apiKey: "AIzaSyB54vr57otWroNRa6W9rb4GJG0swQ1AC3E",
       authDomain: "practice-1c8b0.firebaseapp.com",
@@ -569,7 +550,7 @@
     var db = fire.firestore();
 
 
-    db.collection(`/${pathName}/userinformation/exerciseinformation`).get()
+    db.collection('/limyohan/userinformation/exerciseinformation').get()
     .then((snapshot)=>{
       var datas=[]
       snapshot.forEach(function(doc){
@@ -592,6 +573,24 @@
               }
               console.log('^^^^^^^^^^^^^',datas);
       })
+      // console.log(dates)
+    // db.collection('limyohan').doc('/userinformation/exerciseinformation/2020.8.28').get()
+    // .then((it)=>{
+    //   console.log(999999999,it.data())
+    //   console.log(999999999,Object.keys(it.data()))
+    //   var days =[moment(it.data()['thisdate'][0])]
+    //   console.log(10101010,days)
+    //   var exd = Object.keys(it.data())
+    //   var datas =[]
+    //   // { eventName: 'Lunch Meeting w/ Mark', calendar: 'Work', color: 'orange' },
+    //   for (i in exd) {
+    //     if (exd[i] != 'thisdate') {
+    //       if (it.data()[exd[i]][0] != null) {
+    //         datas.push({ eventName: it.data()[exd[i]][0], calendar: exd[i], color: 'orange',date:days[0] })
+    //       };
+    //     };
+    //   };
+    //   console.log(datas);
 
     !function () {
 
@@ -659,6 +658,23 @@
 
       Calendar.prototype.drawMonth = function () {
         var self = this;
+        console.log(333333333, this)
+        //날짜를 정해주는 부분
+        // this.events.forEach(function (ev) {
+        //   console.log('evevents', ev)
+        //   //ev는 event들이고 여기서 date를 정해준다.
+        //   console.log('self.current.clone().date(Math.random() * (29 - 1) + 1);', self.current.clone().date(Math.random() * (29 - 1) + 1))
+        //   console.log(self.current.clone().date(2020, 9, 10));
+        //   ev.date = moment('2020.9.10');
+        //   console.log('2222222222223333', ev)
+
+        //   // ev.date = new Date(2020,9,10)
+        //   // console.log('ev.date',ev.date);
+
+        // });
+
+        console.log(this.month)
+        console.log(this.oldMonth)
         if (this.month) {
           this.oldMonth = this.month;
           this.oldMonth.className = 'month out ' + (self.next ? 'next' : 'prev');
@@ -747,7 +763,17 @@
         });
         //데이터를 실시간으로 끌어와 보여주는 문제가 남아 있다.
         var days = day.format('yyyy.M.DD');
+        // db.collection("limyohan").doc(`userinformation/exerciseinformation/${day}`).get()
+        // .then((it)=>{
+        //     console.log(it.data());
+        // })
+        //   db.collection("limyohan").doc(`userinformation/exerciseinformation/2020.8.26`).get()
+        //   .then((it)=>{
+        //       console.log(it.data())
+        //   })
 
+        // console.log(day.format('yyyy.M.DD'))
+        //Day Name
         var name = createElement('div', 'day-name', day.format('ddd'));
 
         //Day Number
@@ -974,9 +1000,13 @@
       var calendar = new Calendar('#calendar', datas);
 
     }();
+  // });
 });
   </script>
 
 </body>
 
 </html>
+<!-- 사용목적:
+
+ -->

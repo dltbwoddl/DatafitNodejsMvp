@@ -1,19 +1,23 @@
-const functions = require('firebase-functions');
+var firebase = require("firebase/app");
 const express = require('express')
-const app = express();
-
 var path = require('path');
 var bodyParser = require('body-parser');
+var fs = require('fs');
+const router = express.Router();
+
+const { connected, send } = require("process");
+const { toNamespacedPath } = require("path");
+const { fstat } = require("fs");
+const app = express();
+app.set('view engine', 'pug');
+
 app.use(bodyParser.urlencoded({ extended: false }));
 
-const { toNamespacedPath } = require("path");
 
-var firebase = require("firebase/app");
-
-
-//회원 추가 페이지 만들기.(a제대로 안먹히는 이유 알아보기.)
-//회원 추가하면 데이터 생성되고 리스트에 바로 나오도록 하기.
-
+// Add the Firebase products that you want to use
+require("firebase/auth");
+require("firebase/firestore")
+// TODO: Replace the following with your app's Firebase project configuration
 const firebaseConfig = {
     apiKey: "AIzaSyB54vr57otWroNRa6W9rb4GJG0swQ1AC3E",
     authDomain: "practice-1c8b0.firebaseapp.com",
@@ -24,24 +28,49 @@ const firebaseConfig = {
     appId: "1:486372085816:web:9d225c2e272554924c96cd",
     measurementId: "G-9EQ8YV1KYQ"
 };
-require("firebase/auth");
-require("firebase/firestore");
+
+// Initialize Firebase
+var name
+
+var delname
+var usersinformations = new Map()
+
 firebase.initializeApp(firebaseConfig);
 var db = firebase.firestore();
 
-//회원 리스트 보여주는 페이지
-app.get('/home/:email', (request, response) => {
-    console.log(path)
-    var filteredId = path.parse(request.params.email).base;
-    console.log(filteredId)
-    var html = `
-    <!DOCTYPE html>
+
+//회원 목록을 보여줄 홈페이지.
+app.get('/', (req, res) => {
+    var userlist = `<div class="list">`
+    let doc = db.collection("name").get()
+        .then((snapshot) => {
+            //이름 데이터 가져오기.
+            snapshot.forEach((doc) => {
+                name = doc.data()['username']
+                delname = doc.data()['deletename']
+                console.log(1, name);
+                console.log(2, delname);
+            })
+            for (i = 0; i < name.length; i++) {
+                userlist += `
+                <div class="item">
+                <button type="button" class="btn btn-primary" data-toggle="button" 
+                aria-pressed="false" autocomplete="off" onclick="location.href='/calendarinformation/${name[i]}'">
+                    ${name[i]}
+                  </button>                
+                  </div>`
+            }
+            userlist += `</div>`
+            console.log(userlist)
+            var html = `
+            <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
     <style>
         * {
             margin: 0px;
@@ -68,8 +97,8 @@ app.get('/home/:email', (request, response) => {
         }
 
         div.screen {
-            width: 320px;
-            height: 560px;
+            width: auto;
+            height: auto;
             overflow: hidden;
             position: absolute;
             top: 50px;
@@ -328,20 +357,15 @@ app.get('/home/:email', (request, response) => {
     <a id="view-code" href="https://codepen.io/virgilpana/pen/NPzodr">VIEW CODE</a>
     <div class="screen">
         <div class="navbar"></div>
-        <div class="list">
-            <!-- <div class="item">
-                <div class="img"></div>
-                <span></span>
-                <span></span>
-                <span></span>
-            </div> -->
-        </div>
-
+        ${userlist}
         <div class="circle"></div>
         <div class="menu">
             <ul>
-                <!-- 이메일 주소 넣어서 처리하기. -->
-                <li><a href='./plus/${filteredId}'>회원 추가하기</a></li>
+                <li><a href="">About</a></li>
+                <li><a href="">Share</a></li>
+                <li><a href="">Activity</a></li>
+                <li><a href="">Settings</a></li>
+                <li><a href="">Contact</a></li>
             </ul>
         </div>
         <div class="burger">
@@ -415,14 +439,115 @@ app.get('/home/:email', (request, response) => {
 </body>
 
 </html>
-
-    `
-    response.send(html)
+`
+            res.send(html);
+            return snapshot
+        })
+        .catch((err) => {
+            console.log('Error getting documents', err)
+        })
 })
 
-//회원 추가하기.
-app.get('/home/plus/:email', (request, response) => {
-    var filteredId = path.parse(request.params.email).base;
+app.get('/calendarinformation/:username', function (req, res) {
+    res.sendfile('index.html')
+});
+
+//회원 정보 가져오기.
+app.get('/userinformation/:username', (req, res) => {
+    var filteredId = path.parse(req.params.username).base;
+    console.log(filteredId)
+    db.collection(`${filteredId}`).doc("userinformation").get()
+        .then((it) => {
+            var userdata = it.data()
+            var fat = userdata['fat']
+            var fatlist = ``
+            var muscle = userdata['muscle']
+            var musclelist = ``
+            for (i = 0; i < muscle.length; i++) {
+                fatlist += `<th>${Object.keys(fat[i])}</th>
+                        <th>${Object.values(fat[i])}</th>`
+                musclelist += `<th>${Object.keys(muscle[i])}</th>
+                        <th>${Object.values(muscle[i])}</th>`
+            }
+            console.log(fatlist)
+            var userinfotable = `
+        <table>
+            <tr>
+                <th>${userdata['name']}</th>
+                <th>${userdata['age']}</th>
+                <th>${userdata['sex']}</th>
+                <th>${userdata['weight']}</th>
+                <th>${userdata['height']}</th>
+            </tr>
+            <tr>
+                <th>muscle</th>
+                ${musclelist}
+            </tr>
+            <tr>
+                <th>fat</th>
+                ${fatlist}
+            </tr>
+        </table>
+        `
+            var html = `
+        <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Document</title>
+</head>
+<body>
+${userinfotable}
+</body>
+</html>`
+            res.send(html);
+        });
+})
+
+app.get('/exercisedatacreat/:username', (req, res) => {
+    console.log(1000);
+    db.collection("exercisedata").doc('exdata').get()
+        .then((it, err) => {
+            var p = ''
+            var part = it.data()['part']
+            console.log(it.data()['part']);
+            db.collection('/exercisedata/exdata/body').doc('exd').get().then((it_2, err) => {
+                console.log(it_2.data());
+                console.log(Object.keys(it_2.data()));
+                var keys = Object.keys(it_2.data());
+                for (i in keys) {
+                    p += `
+                <label for=${keys[i]}>Choose ${keys[i]} exercise</label>
+                <select name=${keys[i]} id=${keys[i]}>
+                <option value = none>selector </option>`
+                    var v = it_2.data()[keys[i]]
+                    for (i in v) {
+                        p += `<option value=${v[i]}>${v[i]}</option>`
+                    }
+                    p += `</select><br><br>`
+                    console.log(it_2.data()[keys[i]]);
+                }
+
+                var html = `
+        <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Document</title>
+</head>
+<body>
+            ${p}
+</body>
+</html>
+        `
+                res.send(html)
+            });
+        });
+});
+
+app.get('/create', (req, res) => {
     var html = `
     <!DOCTYPE html>
 <html lang="en">
@@ -432,7 +557,7 @@ app.get('/home/plus/:email', (request, response) => {
 <title>Document</title>
 </head>
 <body>
-    <form action='./plus_process/${filteredId}' method = 'post'>
+    <form action='/create_process' method = 'post'>
         name : <input type='text' name='name'><br>
         age : <input type='text' name='age'><br>
         sex : <input type='text' name='sex'><br>
@@ -444,16 +569,119 @@ app.get('/home/plus/:email', (request, response) => {
     </form>
 </body>
 </html>`
-    response.send(html)
-})
-
-app.get('/timestamp',(request,response)=>{
-    response.send(`${Date.now()}`)
+    res.send(html)
 });
 
-app.get('/timestamp-cached',(request,response)=>{
-    response.set('Cache-Control',`public,max-age=300, s-maxage=600`);
-    response.send(`${Date.now()}`)
+app.post('/create_process', (req, res) => {
+    var post = req.body;
+    var dateFormat = require('dateformat');
+    var now = new Date();
+    var today = dateFormat(now, "yyyy.m.dd")
+    var muscledata = {}
+    var fatdata = {}
+    muscledata[today] = post.muscle
+    fatdata[today] = post.fat
+
+    console.log(today)
+    var data = {
+        'name': post.name,
+        'age': post.age,
+        'sex': post.sex,
+        'height': post.height,
+        'weight': post.weight,
+        'muscle': muscledata,
+        'fat': fatdata
+    }
+    db.collection(`${post.name}`).doc("userinformation").set(
+        data
+    ).then(() => {
+        db.collection('name').doc('usernames').get().then((it, err) => {
+            console.log(it.data()['username']);
+            var usernames = it.data()['username']
+            usernames.push(post.name);
+            console.log(usernames);
+            db.collection('name').doc('usernames').update(
+                'username', usernames
+            ).then(() => {
+                res.redirect('/')
+            });
+        });
+    });
+
 });
 
-exports.app = functions.https.onRequest(app);
+app.listen(300, () => {
+    console.log("welecome");
+});
+
+
+
+//회원 운동 데이터 가져오기.
+// app.get('/userinformation/userexercisedata/:username', (req, res) => {
+//     var filteredId = path.parse(req.params.username).base;
+//     console.log(filteredId)
+//     var date = []
+//     var datehtml = `<ul>`
+//     db.collection(`${filteredId}/userinformation/exerciseinformation`).get()
+//         .then((value, err) => {
+//             value.forEach((doc) => {
+//                 date.push(doc.data()['thisdate'][0])
+//             });
+//             console.log(date);
+//             for (i = 0; i < date.length; i++) {
+//                 datehtml += `<li><a href='/userinformation/userexercisedata/${filteredId}/${date[i]}'>${date[i]}</a></li>`
+//             }
+//             datehtml += `</ul>`
+//             var html = `
+//             <!DOCTYPE html>
+// <html lang="en">
+// <head>
+//     <meta charset="UTF-8">
+//     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+//     <title>Document</title>
+// </head>
+// <body>
+//     ${datehtml}<br>
+// </body>
+// </html>`
+//             res.send(html)
+//         });
+// });
+
+// app.get('/userinformation/userexercisedata/:username/:date', (req, res) => {
+//     var filteredId = path.parse(req.params.username).base;
+//     var date = path.parse(req.params.date).base;
+//     var exerciseinfo = `<table>`
+//     db.collection(`${filteredId}`).doc(`userinformation/exerciseinformation/${date}`).get()
+//         .then((it) => {
+//             console.log(100)
+//             var key = Object.keys(it.data())
+//             var value = Object.values(it.data())
+//             for (i = 0; i < key.length; i++) {
+//                 if (value[i].length == 0) {
+
+//                 } else {
+//                     exerciseinfo += `
+//                 <tr>
+//                     <th>${key[i]}</th>
+//                     <th>${value[i]}</th>
+//                 </tr>`
+//                 }
+
+//             }
+//             exerciseinfo += `</table>`
+//             var html = `
+//             <!DOCTYPE html>
+// <html lang="en">
+// <head>
+//     <meta charset="UTF-8">
+//     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+//     <title>Document</title>
+// </head>
+// <body>
+//     ${exerciseinfo}<br>
+// </body>
+// </html>`
+//             res.send(html)
+//         });
+// });

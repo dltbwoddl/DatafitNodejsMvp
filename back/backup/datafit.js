@@ -13,18 +13,10 @@ app.set('view engine', 'pug');
 
 app.use(bodyParser.urlencoded({ extended: false }));
 
-//9/3
-//menu codepen으로 바꾸기.(button은 bootstarp꺼로)
-//호스팅 방법 강의 듣고 적용해보기.
-//저작권 적용하기.
-//데이터 구조 짜기.
-
 //9/4
-//로그인 페이지 추가
+//로그인 적용하기./ 호스팅 적용하기
 //데이터 구조 바꾸기.
-//데이터 구조 바꾼 것 기존 웹 코드에 적용하기.
-//운동데이터 색변화 적용하기.
-//회원 추가하기 만들기->운동추가하기 만들기
+//
 
 // Add the Firebase products that you want to use
 require("firebase/auth");
