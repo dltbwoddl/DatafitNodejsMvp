@@ -14,8 +14,9 @@ const { response } = require('express');
 const { isNull } = require('util');
 
 
-//운동추가페이지 추가구현하기.
-
+//회원리스트 버튼 수정하기.
+//운동, 회원 삭제 구현하기.
+//추가하기 부분들 보완하기.논리구조
 const firebaseConfig = {
   apiKey: "AIzaSyB54vr57otWroNRa6W9rb4GJG0swQ1AC3E",
   authDomain: "practice-1c8b0.firebaseapp.com",
@@ -481,7 +482,7 @@ app.post('/plus_process/:email', (request, response) => {
         response.redirect(`/home/${filteredId}`)
         return (' ')
       }).catch(() => { })
-      return('')
+      return ('')
     }).catch(() => { })
     return ('')
   }).catch(() => { })
@@ -781,11 +782,12 @@ app.get('/calendar/:email/:name', (request, response) => {
         .legend {
           position: absolute;
           bottom: 0;
-          width: 100%;
-          height: 30px;
+          width: auto;
+          /* width: 100%; */
+          height: auto;
+          /* height: 30px; */
           background: rgba(60, 60, 60, 1);
           line-height: 30px;
-    
         }
     
         .entry {
@@ -1459,9 +1461,10 @@ app.post('/:email/plusactivity', (request, response) => {
   var name = post.name
   var email = path.parse(request.params.email).base;
   db.collection(`${email}`).doc("exercisedata").get().then((it) => {
-    var d = it.data()['part']
+    var d = it.data()
     var keys = Object.keys(d)
-    console.log(keys)
+    console.log("keys", keys)
+    console.log("ddd", d[keys[0]])
     var p = `<div id='exerciseplus'>`
     for (i in keys) {
       p += `${keys[i]} : <select name='${keys[i]}'><option value='choose'>choose</option>`
@@ -1469,14 +1472,12 @@ app.post('/:email/plusactivity', (request, response) => {
       for (j in v) {
         p += `<option value='${v[j]}'>${v[j]}</option>`
       }
-      //<br><input name='${keys[i]}' type='text'>
-      p += `</select></div>`
+      p += `</select><input name='${keys[i]}text' type='text'></div>`
     }
     console.log(p)
-    db.collection('limyohan@naver.com').doc('exercisedata').get().then((it) => {
-      var d = it.data()['part']
+    db.collection(`${email}`).doc('exercisedata').get().then((it) => {
+      var d = it.data()
       var keys = Object.keys(d)
-      console.log(keys, d)
       var s = `<div id='part'><select name='part_2'><option value ='choose'>choose</option>`
       for (i in keys) {
         console.log(i)
@@ -1497,19 +1498,24 @@ app.post('/:email/plusactivity', (request, response) => {
 <body>
     <form action='/explusac_process' id='plusex' method="POST">
         <div id='exlist'></div>
-        <button onclick="myFunction()">기존의 파트에 새로운 운동을 추가하는 경우</button>
-        <div id=explus_2>
-          <div id='parts'></div>
+        <button type="button" onclick="myFunction()">기존의 파트에 새로운 운동을 추가하는 경우</button>
+        <br><div id=explus_2>
+        <label for="Parts">Part:</label>
+        <div id='parts'></div>
             <label for="Exercise">Exercise name:</label>
-            <input type="text" id="Exercise" name="ex_2"><br><br>
+            <input type="text" id="Exercise" name="ex_2">
+            <label for="Exercise">detail:</label>
+            <input type="text" id="Exercise" name="ex_2detail"><br><br>
           </div>
         
-        <button onclick="myFunction_2()">새로운 파트를 추가하는 경우</button>
-        <div id=explus_3>
+        <button type="button" onclick="myFunction_2()">새로운 파트를 추가하는 경우</button>
+        <br><div id=explus_3>
         <label for="allPart">Part:</label>
         <input type="text" id="allPart" name="part_3"><br><br>
         <label for="allExercise">Exercise name:</label>
-        <input type="text" id="allExercise" name="ex_3"><br><br>
+        <input type="text" id="allExercise" name="ex_3">
+        <label for="Exercise">detail:</label>
+            <input type="text" id="Exercise" name="ex_3detail"><br><br>
         </div>
         <input type="submit" value="Submit">
         <input type="text" name="email" value='${email}' id="email" display=none>
@@ -1520,6 +1526,9 @@ app.post('/:email/plusactivity', (request, response) => {
       function myFunction() {
         document.getElementById("explus_2").style.display = "inline";
         }
+      function myFunction_b() {
+          document.getElementById("explus_2").style.display = "none";
+          }
         function myFunction_2() {
           document.getElementById("explus_3").style.display = "inline";
           }
@@ -1538,17 +1547,10 @@ app.post('/:email/plusactivity', (request, response) => {
       response.send(html);
       return (" ")
     }).catch(() => { })
-    return("")
+    return ("")
   }).catch(() => { })
 })
 //운동추가 과정
-
-//한번에 여러개 운동 추가할 수 있도록 하기.
-
-//해당 날짜에 운동이 있는 경우
-//해당 날짜에 운동이 없는 경우
-
-//새로운 부위 혹은 운동을 추가하는 경우.
 app.post('/explusac_process', (request, response) => {
   var post = request.body;
   var name = post.name
@@ -1570,13 +1572,36 @@ app.post('/explusac_process', (request, response) => {
     for (i in keys) {
       var k = keys[i]
       if (l.includes(k) === false) {
-        d += post[k]
-        d += k
-        if (post.k !== '') {
-          d += 0
-          p[k] = new Array(post[k])
+        if (k.slice(-4) !== "text") {
+          if (post[k] !== 'choose' && post[k] !== undefined) {
+            p[k] = new Array(post[k] + " : " + post[k + "text"])
+          }
         }
       }
+    }
+  } else {
+    //기존의 부위에 새로운 운동 추가할 때
+    if (part_2 !== 'choose') {
+      p_2 = post['part_2']
+      ex_2 = post['ex_2']
+      p[p_2] = new Array(ex_2 + " : " + post['ex_2detail'])
+      console.log(222222222222, p_2)
+      db.collection(`${email}`).doc('exercisedata').get().then((it) => {
+        var h = it.data()[`${p_2}`]
+        h.push(ex_2)
+        console.log('hhhhhhhhhhhhhhhh', h)
+        db.collection(`${email}`).doc('exercisedata').update(
+          `${p_2}`, h
+        ).catch(()=>{})
+      return(' ')}).catch(()=>{})
+    } else {
+      //새로운 부위에 새로운 운동 추가할 때.
+      p_3 = post['part_3']
+      ex_3 = post['ex_3']
+      p[p_3] = new Array(ex_3 + " : "+post['ex_3detail'])
+      db.collection(`${email}`).doc('exercisedata').update(
+        p_3, new Array(ex_3)
+      )
     }
   }
   db.collection(`${email}/name/${name}/userinformation/exercisebydate`).doc(`${date}`)
@@ -1602,8 +1627,8 @@ app.post('/explusac_process', (request, response) => {
             for (i in ks) {
               if (ks[i] !== 'thisdate') {
                 var v = d[ks[i]]
-                if(v ===undefined){
-                  v=new Array()
+                if (v === undefined) {
+                  v = new Array()
                 }
                 v.push(p[ks[i]][0])
                 x[ks[i]] = v
@@ -1613,12 +1638,12 @@ app.post('/explusac_process', (request, response) => {
               .update(x)
               .then(() => {
                 response.redirect(`/calendar/${email}/${name}`)
-                return(" ")
+                return (" ")
               }).catch(() => { })
-              return(" ")
-            }).catch(() => { })
+            return (" ")
+          }).catch(() => { })
       }
-      return(" ")
+      return (" ")
     }).catch(() => { })
 
 
