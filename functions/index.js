@@ -14,9 +14,8 @@ const { response } = require('express');
 const { isNull } = require('util');
 
 
-//회원리스트 버튼 수정하기.
-//운동, 회원 삭제 구현하기.
-//추가하기 부분들 보완하기.논리구조
+//회원목록 버튼 바로 넘어가도록 만들기.
+//운동 삭제 페이지 구현하기
 const firebaseConfig = {
   apiKey: "AIzaSyB54vr57otWroNRa6W9rb4GJG0swQ1AC3E",
   authDomain: "practice-1c8b0.firebaseapp.com",
@@ -1028,8 +1027,8 @@ app.get('/calendar/:email/:name', (request, response) => {
         <input type="text" id="name" name="name" value="${name}">
         <input type="submit" value="운동 추가하기.">
       </form>
-    
-      <!-- Insert these scripts at the bottom of the HTML, but before you use any Firebase services -->
+      <button type="button" onclick=" window.location.href='/information/${email}/${name}'">회원 상세보기</button>
+     <!-- Insert these scripts at the bottom of the HTML, but before you use any Firebase services -->
     
       <!-- Firebase App (the core Firebase SDK) is always required and must be listed first -->
       <script src="https://www.gstatic.com/firebasejs/6.2.0/firebase-app.js"></script>
@@ -1574,13 +1573,16 @@ app.post('/explusac_process', (request, response) => {
       if (l.includes(k) === false) {
         if (k.slice(-4) !== "text") {
           if (post[k] !== 'choose' && post[k] !== undefined) {
-            p[k] = new Array(post[k] + " : " + post[k + "text"])
+            if (k.slice(-4) !== "tail") {
+              p[k] = new Array(post[k] + " : " + post[k + "text"])
+            }
           }
         }
       }
     }
   } else {
     //기존의 부위에 새로운 운동 추가할 때
+    console.log(10000000)
     if (part_2 !== 'choose') {
       p_2 = post['part_2']
       ex_2 = post['ex_2']
@@ -1592,13 +1594,14 @@ app.post('/explusac_process', (request, response) => {
         console.log('hhhhhhhhhhhhhhhh', h)
         db.collection(`${email}`).doc('exercisedata').update(
           `${p_2}`, h
-        ).catch(()=>{})
-      return(' ')}).catch(()=>{})
+        ).catch(() => { })
+        return (' ')
+      }).catch(() => { })
     } else {
       //새로운 부위에 새로운 운동 추가할 때.
       p_3 = post['part_3']
       ex_3 = post['ex_3']
-      p[p_3] = new Array(ex_3 + " : "+post['ex_3detail'])
+      p[p_3] = new Array(ex_3 + " : " + post['ex_3detail'])
       db.collection(`${email}`).doc('exercisedata').update(
         p_3, new Array(ex_3)
       )
@@ -1648,5 +1651,38 @@ app.post('/explusac_process', (request, response) => {
 
 
 })
+//회원 정보 상세보기
+app.get('/information/:email/:name', (request, response) => {
+  //email, name가져오고 firestore에서 데이터 가져오기.
+  var email = path.parse(request.params.email).base;
+  var name = path.parse(request.params.name).base;
+  db.collection(`${email}/name/${name}`).doc('userinformation').get().then((it) => {
+    var keys = Object.keys(it.data())
+    var d = it.data()
+    var p = `<div>`
+    for (i in keys) {
+      if (typeof d[keys[i]] == "object") {
+        p += `<p>${keys[i]} : ${Object.keys(d[keys[i]])[0]} = ${Object.values(d[keys[i]])[0]}</p>`
+      } else {
+        p += `<p>${keys[i]} : ${d[keys[i]]}</p>`
+      }
+    }
+    p += `</div>`
 
+    var html = `
+  <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    ${p}
+</body>
+</html>
+  `
+    response.send(html)
+  })
+})
 exports.app = functions.https.onRequest(app);
