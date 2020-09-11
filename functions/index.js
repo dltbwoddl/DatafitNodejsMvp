@@ -13,9 +13,8 @@ const { request } = require('http');
 const { response } = require('express');
 const { isNull } = require('util');
 
-
-//회원목록 버튼 바로 넘어가도록 만들기.
-//운동 삭제 페이지 구현하기
+//회원 목록 보여주는 페이지 수정하기.
+//운동 삭제 페이지 구현하기.
 const firebaseConfig = {
   apiKey: "AIzaSyB54vr57otWroNRa6W9rb4GJG0swQ1AC3E",
   authDomain: "practice-1c8b0.firebaseapp.com",
@@ -32,391 +31,301 @@ firebase.initializeApp(firebaseConfig);
 var db = firebase.firestore();
 
 //회원 리스트 보여주는 페이지
+//회원 추가하기, 캘린더 넘어가는 버튼 만들기.
 app.get('/home/:email', (request, response) => {
   console.log(path)
   var filteredId = path.parse(request.params.email).base;
   console.log(filteredId)
-  db.collection(`${filteredId}`).doc('name').get().then((it, err) => {
-    var namelist = it.data()['existing']
-    var p = ``
-    for (i in namelist) {
-      p += `<a href='/calendar/${filteredId}/${namelist[i]}'
-             class="btn btn-primary btn-lg disabled" 
-             role="button" 
-             aria-disabled="true">${namelist[i]}</a>`
-    }
-    var html = `
-        <!DOCTYPE html>
-        <html lang="en">
-        
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Document</title>
-            <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-            <style>
-                * {
-                    margin: 0px;
-                    padding: 0px;
-                }
-        
-                body {
-                    background: #383c55;
-                    width: 100%;
-                    height: 100%;
-                    font: 12px "Open Sans", sans-serif;
-                }
-        
-                #view-code {
-                    color: #4183d7;
-                    font-size: 13px;
-                    text-transform: uppercase;
-                    font-weight: 700;
-                    text-decoration: none;
-                    position: absolute;
-                    top: 640px;
-                    left: 50%;
-                    margin-left: -35px;
-                }
-        
-                div.screen {
-                    width: 320px;
-                    height: 560px;
-                    overflow: hidden;
-                    position: absolute;
-                    top: 50px;
-                    left: 50%;
-                    margin-left: -160px;
-                    background: #31558a;
-                }
-        
-                .list {
-                    margin-top: 36px;
-                    text-align: left;
-                }
-        
-                .item {
-                    height: 115px;
-                    margin-top: 30px 0;
-                    padding-left: 115px;
-                    clear: both;
-                }
-        
-                .item .img {
-                    float: left;
-                    width: 71px;
-                    height: 71px;
-                    margin-left: -93px;
-                }
-        
-                .item span {
-                    height: 11px;
-                    width: 180px;
-                    margin-bottom: 19px;
-                    float: left;
-                }
-        
-                .item span:nth-of-type(3) {
-                    width: 75px;
-                    margin-botom: 0;
-                }
-        
-                div.burger {
-                    height: 30px;
-                    width: 40px;
-                    position: absolute;
-                    top: 11px;
-                    left: 21px;
-                    cursor: pointer;
-                }
-        
-                div.x,
-                div.y,
-                div.z {
-                    position: absolute;
-                    margin: auto;
-                    top: 0px;
-                    bottom: 0px;
-                    background: #fff;
-                    border-radius: 2px;
-                    -webkit-transition: all 200ms ease-out;
-                    -moz-transition: all 200ms ease-out;
-                    -ms-transition: all 200ms ease-out;
-                    -o-transition: all 200ms ease-out;
-                    transition: all 200ms ease-out;
-                }
-        
-                div.x,
-                div.y,
-                div.z {
-                    height: 3px;
-                    width: 26px;
-                }
-        
-                div.y {
-                    top: 18px;
-                }
-        
-                div.z {
-                    top: 37px;
-                }
-        
-                div.collapse {
-                    top: 20px;
-                    background: #4a89dc;
-                    -webkit-transition: all 70ms ease-out;
-                    -moz-transition: all 70ms ease-out;
-                    -ms-transition: all 70ms ease-out;
-                    -o-transition: all 70ms ease-out;
-                    transition: all 70ms ease-out;
-                }
-        
-        
-                div.rotate30 {
-                    -ms-transform: rotate(30deg);
-                    -webkit-transform: rotate(30deg);
-                    transform: rotate(30deg);
-                    -webkit-transition: all 50ms ease-out;
-                    -moz-transition: all 50ms ease-out;
-                    -ms-transition: all 50ms ease-out;
-                    -o-transition: all 50ms ease-out;
-                    transition: all 50ms ease-out;
-                }
-        
-                div.rotate150 {
-                    -ms-transform: rotate(150deg);
-                    -webkit-transform: rotate(150deg);
-                    transform: rotate(150deg);
-                    -webkit-transition: all 50ms ease-out;
-                    -moz-transition: all 50ms ease-out;
-                    -ms-transition: all 50ms ease-out;
-                    -o-transition: all 50ms ease-out;
-                    transition: all 50ms ease-out;
-                }
-        
-                div.rotate45 {
-                    -ms-transform: rotate(45deg);
-                    -webkit-transform: rotate(45deg);
-                    transform: rotate(45deg);
-                    -webkit-transition: all 100ms ease-out;
-                    -moz-transition: all 100ms ease-out;
-                    -ms-transition: all 100ms ease-out;
-                    -o-transition: all 100ms ease-out;
-                    transition: all 100ms ease-out;
-                }
-        
-                div.rotate135 {
-                    -ms-transform: rotate(135deg);
-                    -webkit-transform: rotate(135deg);
-                    transform: rotate(135deg);
-                    -webkit-transition: all 100ms ease-out;
-                    -moz-transition: all 100ms ease-out;
-                    -ms-transition: all 100ms ease-out;
-                    -o-transition: all 100ms ease-out;
-                    transition: all 100ms ease-out;
-                }
-        
-                div.navbar {
-                    height: 73px;
-                    background: #385e97;
-                }
-        
-                div.circle {
-                    border-radius: 50%;
-                    width: 0px;
-                    height: 0px;
-                    position: absolute;
-                    top: 35px;
-                    left: 36px;
-                    background: #fff;
-                    opacity: 1;
-                    -webkit-transition: all 300ms cubic-bezier(0.000, 0.995, 0.990, 1.000);
-                    -moz-transition: all 300ms cubic-bezier(0.000, 0.995, 0.990, 1.000);
-                    -ms-transition: all 300ms cubic-bezier(0.000, 0.995, 0.990, 1.000);
-                    -o-transition: all 300ms cubic-bezier(0.000, 0.995, 0.990, 1.000);
-                    transition: all 300ms cubic-bezier(0.000, 0.995, 0.990, 1.000);
-                }
-        
-                div.circle.expand {
-                    width: 1200px;
-                    height: 1200px;
-                    top: -560px;
-                    left: -565px;
-                    -webkit-transition: all 400ms cubic-bezier(0.000, 0.995, 0.990, 1.000);
-                    -moz-transition: all 400ms cubic-bezier(0.000, 0.995, 0.990, 1.000);
-                    -ms-transition: all 400ms cubic-bezier(0.000, 0.995, 0.990, 1.000);
-                    -o-transition: all 400ms cubic-bezier(0.000, 0.995, 0.990, 1.000);
-                    transition: all 400ms cubic-bezier(0.000, 0.995, 0.990, 1.000);
-        
-                }
-        
-                div.menu {
-                    height: 568px;
-                    width: 320px;
-                    position: absolute;
-                    top: 0px;
-                    left: 0px;
-                }
-        
-                div.menu ul li {
-                    list-style: none;
-                    position: absolute;
-                    top: 50px;
-                    ;
-                    left: 0;
-                    opacity: 0;
-                    width: 320px;
-                    text-align: center;
-                    font-size: 0px;
-                    -webkit-transition: all 70ms cubic-bezier(0.000, 0.995, 0.990, 1.000);
-                    -moz-transition: all 70ms cubic-bezier(0.000, 0.995, 0.990, 1.000);
-                    -ms-transition: all 70ms cubic-bezier(0.000, 0.995, 0.990, 1.000);
-                    -o-transition: all 70ms cubic-bezier(0.000, 0.995, 0.990, 1.000);
-                    transition: all 70ms cubic-bezier(0.000, 0.995, 0.990, 1.000);
-                }
-        
-                div.menu ul li a {
-                    color: #4a89dc;
-                    text-transform: uppercase;
-                    text-decoration: none;
-                    letter-spacing: 3px;
-                }
-        
-                div.menu li.animate {
-                    font-size: 21px;
-                    opacity: 1;
-                    -webkit-transition: all 150ms cubic-bezier(0.000, 0.995, 0.990, 1.000);
-                    -moz-transition: all 150ms cubic-bezier(0.000, 0.995, 0.990, 1.000);
-                    -ms-transition: all 150ms cubic-bezier(0.000, 0.995, 0.990, 1.000);
-                    -o-transition: all 150ms cubic-bezier(0.000, 0.995, 0.990, 1.000);
-                    transition: all 150ms cubic-bezier(0.000, 0.995, 0.990, 1.000);
-                }
-        
-                div.menu li.animate:nth-of-type(1) {
-                    top: 120px;
-                    transition-delay: 0.0s;
-                }
-        
-                div.menu li.animate:nth-of-type(2) {
-                    top: 190px;
-                    transition-delay: 0.03s;
-        
-                }
-        
-                div.menu li.animate:nth-of-type(3) {
-                    top: 260px;
-                    transition-delay: 0.06s;
-        
-                }
-        
-                div.menu li.animate:nth-of-type(4) {
-                    top: 330px;
-                    transition-delay: 0.09s;
-        
-                }
-        
-                div.menu li.animate:nth-of-type(5) {
-                    top: 400px;
-                    transition-delay: 0.12s;
-        
-                }
-        
-                div.menu li.animate:nth-of-type(6) {
-                    top: 470px;
-                    transition-delay: 0.15s;
-        
-                }
-            </style>
-        </head>
-        
-        <body>
-            <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
-            <a id="view-code" href="https://codepen.io/virgilpana/pen/NPzodr">VIEW CODE</a>
-            <div class="screen">
-                <div class="navbar"></div>
-                        ${p}
-                <div class="circle"></div>
-                <div class="menu">
-                    <ul>
-                        <!-- 이메일 주소 넣어서 처리하기. -->
-                        <li><a href="./plus/${filteredId}">회원 추가하기</a></li>
-                    </ul>
-                </div>
-                <div class="burger">
-                    <div class="x"></div>
-                    <div class="y"></div>
-                    <div class="z"></div>
-                </div>
-        
-            </div>
-            <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
-            <script>
-                if ('ontouchstart' in window) { var click = 'touchstart'; }
-                else { var click = 'click'; }
-        
-        
-                $('div.burger').on(click, function () {
-        
-                    if (!$(this).hasClass('open')) { openMenu(); }
-                    else { closeMenu(); }
-        
-                });
-        
-        
-                $('div.menu ul li a').on(click, function (e) {
-                    
-                });
-        
-        
-                function openMenu() {
-        
-                    $('div.circle').addClass('expand');
-        
-                    $('div.burger').addClass('open');
-                    $('div.x, div.y, div.z').addClass('collapse');
-                    $('.menu li').addClass('animate');
-        
-                    setTimeout(function () {
-                        $('div.y').hide();
-                        $('div.x').addClass('rotate30');
-                        $('div.z').addClass('rotate150');
-                    }, 70);
-                    setTimeout(function () {
-                        $('div.x').addClass('rotate45');
-                        $('div.z').addClass('rotate135');
-                    }, 120);
-        
-        
-        
-                }
-        
-                function closeMenu() {
-        
-                    $('div.burger').removeClass('open');
-                    $('div.x').removeClass('rotate45').addClass('rotate30');
-                    $('div.z').removeClass('rotate135').addClass('rotate150');
-                    $('div.circle').removeClass('expand');
-                    $('.menu li').removeClass('animate');
-        
-                    setTimeout(function () {
-                        $('div.x').removeClass('rotate30');
-                        $('div.z').removeClass('rotate150');
-                    }, 50);
-                    setTimeout(function () {
-                        $('div.y').show();
-                        $('div.x, div.y, div.z').removeClass('collapse');
-                    }, 70);
-        
-                }
-            </script>
-        </body>
-        
-        </html>
-    `
-    response.send(html)
-    return (html)
-  }).catch(() => { })
+var html = `
+<!DOCTYPE html>
+<html lang="en">
 
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        * {
+            margin: 0;
+            box-sizing: border-box;
+        }
+
+        ul {
+            padding: 0;
+            list-style: none;
+        }
+
+        a {
+            color: #555;
+            transition: 0.3s;
+            text-decoration: none;
+
+        }
+
+        a:hover {
+            color: #bbb;
+        }
+
+        .fl-left {
+            float: left;
+        }
+
+        .d-none {
+            display: none;
+        }
+
+        .clearfix:after {
+            display: table;
+            content: "";
+            clear: both;
+        }
+
+        #content {
+            margin: 0 auto;
+            padding: 0 10%;
+            max-width: 767px;
+        }
+
+        /* ===================================header */
+
+        #header {
+            padding: 30px 0;
+            width: 100%;
+            height: auto;
+            background-color: rgba(252, 151, 73, .9);
+            text-align: center;
+        }
+
+        #header p {
+            padding-top: 5px;
+            font-size: 11px;
+            font-family: Verdana;
+            color: black;
+            animation-name: black-to-white;
+            animation-duration: 3s;
+            animation-iteration-count: infinite;
+            animation-timing-function: linear;
+        }
+
+        @keyframes black-to-white {
+            0% {
+                color: rgba(0, 0, 0);
+            }
+
+            25% {
+                color: rgba(0, 0, 0, 0.3);
+            }
+
+            50% {
+                color: rgba(0, 0, 0, 0.8);
+            }
+
+            75% {
+                color: rgba(0, 0, 0, 0.3);
+            }
+
+            100% {
+                color: rgba(0, 0, 0);
+            }
+        }
+
+        /* ===================================show selected member */
+
+        #show-selected-member {
+            position: relative;
+            margin-top: 30px;
+            padding-top: 30px;
+            padding-bottom: 30px;
+            width: 100%;
+            height: auto;
+            background-color: rgba(252, 151, 73, .4);
+            border-bottom: 1px dotted rgba(0, 0, 0, 0.3);
+        }
+
+        #show-selected-member p {
+            padding: 5px 0;
+            font-size: 15px;
+            letter-spacing: 1px;
+        }
+
+        #close {
+            position: absolute;
+            display: inline-block;
+            right: 30px;
+            text-decoration: none;
+            font-family: Verdana;
+            font-size: 10px;
+            letter-spacing: 1px;
+        }
+
+        #info-list>div {
+            padding-left: 30px;
+        }
+
+        .avatar img {
+            max-height: 72px;
+            width: 100%;
+        }
+
+        /* =================================== member list */
+
+        #member-list {
+            padding-top: 30px;
+            padding-bottom: 30px;
+        }
+
+        #member-list li {
+            margin: 5px;
+        }
+
+        .member {
+            display: inline-block;
+            width: calc(25% - 10px);
+            line-height: 40px;
+            text-align: center;
+
+        }
+
+        .member a {
+            display: inline-block;
+            width: 100%;
+            height: 100%;
+            font-size: 15px;
+            letter-spacing: 1px;
+            background-color: rgba(252, 151, 73, .2);
+        }
+
+
+        @media (min-width: 768px) {
+            #content {
+                margin: 0 auto;
+                padding: 0 10%;
+                max-width: 1100px;
+            }
+
+            .member {
+                width: calc(20% - 10px);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="header">
+        <h1>Member List</h1>
+        <a href="/home/plus/${filteredId}">회원 추가</a>
+    </div>
+    <div id="content">
+        <!---show info of selected member -->
+        <div id="show-selected-member" class="d-none">
+            <a href="#" id="close">CLOSE[X]</a>
+        </div>
+
+        <!---show list of all members  -->
+        <ul id="member-list"></ul>
+    </div>
+    <!-- Firebase App (the core Firebase SDK) is always required and must be listed first -->
+    <script src="https://www.gstatic.com/firebasejs/6.2.0/firebase-app.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <!-- Add Firebase products that you want to use -->
+    <script src="https://www.gstatic.com/firebasejs/6.2.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/6.2.0/firebase-firestore.js"></script>
+    <script>
+    var link = document.location.href.split("/")[4];
+    console.log(111111111111111111111,link)
+        $(document).ready(function () {
+
+
+            var firebaseConfig = {
+                apiKey: "AIzaSyB54vr57otWroNRa6W9rb4GJG0swQ1AC3E",
+                authDomain: "practice-1c8b0.firebaseapp.com",
+                databaseURL: "https://practice-1c8b0.firebaseio.com",
+                projectId: "practice-1c8b0",
+                storageBucket: "practice-1c8b0.appspot.com",
+                messagingSenderId: "486372085816",
+                appId: "1:486372085816:web:9d225c2e272554924c96cd",
+                measurementId: "G-9EQ8YV1KYQ"
+            };
+            // Initialize Firebase
+            var fire = firebase.initializeApp(firebaseConfig);
+            var db = fire.firestore();
+            var memberdatalist = new Array()
+            db.collection('${filteredId}').doc('name').get().then((it)=>{
+                console.log(it.data()['existing'])
+                var member = it.data()['existing']
+                for(i in member){
+                    databind(member[i])
+                }
+            
+            })
+            console.log(22222,memberdatalist)
+            
+            function databind(memberi) {
+
+                // for (let v in data.results) {
+                db.collection(\`${filteredId}/name/\${memberi}\`).doc('userinformation').get().then((mem) => {
+                    console.log(mem.data())
+                    let user = mem.data();
+                    let memberTag = $('<li class="member">');
+                    let aTag = $('<a href="#show-selected-member" class="member-name">');
+                    $(aTag).html(user['name']);
+                    $(memberTag).append(aTag);
+
+                    let infoArea = $('<div class="info-area d-none">');
+                    let infoList = $('<div id="info-list" class="clearfix">');
+
+                    let infoListItems = \`
+
+          <div class="fl-left">
+            <p>Name : \${user['name']}</p>
+            <p>Gender : \${user['sex']}</p>
+            <p>weight : \${user['weight']}</p>
+            <p>height : \${user['height']}</p>
+            <a href="/calendar/\${link}/\${user['name']}">운동 캘린더</a>
+          </div>\`;
+
+                    $(infoList).append(infoListItems)
+                    $(infoArea).append(infoList);
+
+                    $(memberTag).append(infoArea);
+
+                    $('#member-list').append(memberTag);
+                })
+
+            }
+
+
+            $('body').on("click", '.member-name', function (e) {
+                $('#show-selected-member').removeClass('d-none');
+
+                $('#seleted-member').remove();
+
+                const info = $(e.target).parent().find('.info-area').html();
+                const infoTag = \`<div id="seleted-member">\${info}</div>\`;
+                $('#show-selected-member').append(infoTag);
+
+                var target = $(e.target).attr("href");
+                var offset = $(target).offset();
+                $('html').animate({ scrollTop: offset.top });
+
+                e.preventDefault();
+            });
+
+            // btn-close in #show-selected-member
+            $('body').on("click", '#close', function (e) {
+                $('#show-selected-member').addClass('d-none');
+                e.preventDefault();
+            });
+
+
+        });
+
+    </script>
+</body>
+
+</html>
+`
+response.send(html)
 })
 
 //회원 추가하기.
@@ -1453,6 +1362,7 @@ app.get('/calendar/:email/:name', (request, response) => {
   response.send(html)
 
 })
+
 //운동추가 페이지
 app.post('/:email/plusactivity', (request, response) => {
   var post = request.body;
@@ -1549,6 +1459,7 @@ app.post('/:email/plusactivity', (request, response) => {
     return ("")
   }).catch(() => { })
 })
+
 //운동추가 과정
 app.post('/explusac_process', (request, response) => {
   var post = request.body;
@@ -1651,6 +1562,7 @@ app.post('/explusac_process', (request, response) => {
 
 
 })
+
 //회원 정보 상세보기
 app.get('/information/:email/:name', (request, response) => {
   //email, name가져오고 firestore에서 데이터 가져오기.
@@ -1661,7 +1573,7 @@ app.get('/information/:email/:name', (request, response) => {
     var d = it.data()
     var p = `<div>`
     for (i in keys) {
-      if (typeof d[keys[i]] == "object") {
+      if (typeof d[keys[i]] === "object") {
         p += `<p>${keys[i]} : ${Object.keys(d[keys[i]])[0]} = ${Object.values(d[keys[i]])[0]}</p>`
       } else {
         p += `<p>${keys[i]} : ${d[keys[i]]}</p>`
@@ -1683,6 +1595,9 @@ app.get('/information/:email/:name', (request, response) => {
 </html>
   `
     response.send(html)
-  })
+    return(" ")
+  }).catch(()=>{})
 })
+
+//회원 운동 삭제 페이지 구현하기.
 exports.app = functions.https.onRequest(app);
