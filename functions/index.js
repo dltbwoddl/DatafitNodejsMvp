@@ -13,8 +13,10 @@ const { request } = require('http');
 const { response } = require('express');
 const { isNull } = require('util');
 
-//회원 목록 보여주는 페이지 수정하기.
-//운동 삭제 페이지 구현하기.
+//버튼으로 삭제하는 버튼, 같은 내용 운동이면 둘다 삭제 하지만 이용자 입장에서 
+//똑같은 내용을 두번 입력하는 경우는 흔하지 않으므로 굳이 안고쳐도 될듯
+//회원 삭제/복구 만들기.
+
 const firebaseConfig = {
   apiKey: "AIzaSyB54vr57otWroNRa6W9rb4GJG0swQ1AC3E",
   authDomain: "practice-1c8b0.firebaseapp.com",
@@ -36,7 +38,7 @@ app.get('/home/:email', (request, response) => {
   console.log(path)
   var filteredId = path.parse(request.params.email).base;
   console.log(filteredId)
-var html = `
+  var html = `
 <!DOCTYPE html>
 <html lang="en">
 
@@ -325,7 +327,7 @@ var html = `
 
 </html>
 `
-response.send(html)
+  response.send(html)
 })
 
 //회원 추가하기.
@@ -1230,20 +1232,33 @@ app.get('/calendar/:email/:name', (request, response) => {
     
               //이벤트 텍스트 만들어주는 곳
               Calendar.prototype.renderEvents = function (events, ele) {
-                console.log(2)
                 //Remove any events in the current details element
                 var currentWrapper = ele.querySelector('.events');
                 var wrapper = createElement('div', 'events in' + (currentWrapper ? ' new' : ''));
-    
+                var form = createElement('form')
+                form.setAttribute('action',\`/exercisedel/${email}/${name}/\${day.format("YYYY.M.D")}\`) 
+                form.setAttribute('method','post')
                 events.forEach(function (ev) {
+                  console.log(2222222,day.format("YYYY.M.D"))
                   var div = createElement('div', 'event');
                   var square = createElement('div', 'event-category ' + ev.color);
-                  var span = createElement('span', '', ev.eventName);
-    
+                  var span = createElement('input');
+                  span.setAttribute("type", "checkbox");
+                  span.setAttribute("name",\`\${ev.eventName}\`);
+                  span.setAttribute("value",ev.eventName)
+                  var label = createElement("label");
+                  label.setAttribute('for',ev.eventName)
+                  label.innerHTML=ev.eventName
                   div.appendChild(square);
+                  div.appendChild(label);
                   div.appendChild(span);
-                  wrapper.appendChild(div);
+                  form.appendChild(div);
+                  wrapper.appendChild(form);
+                  console.log(10)
                 });
+                var submit = createElement('input')
+                submit.setAttribute('type','submit')
+                form.appendChild(submit)
     
                 if (!events.length) {
                   var div = createElement('div', 'event empty');
@@ -1595,9 +1610,52 @@ app.get('/information/:email/:name', (request, response) => {
 </html>
   `
     response.send(html)
-    return(" ")
-  }).catch(()=>{})
+    return (" ")
+  }).catch(() => { })
 })
 
 //회원 운동 삭제 페이지 구현하기.
+//회원 운동 삭제 프로세스 완성하기.
+app.post('/exercisedel/:email/:name/:date', (request, response) => {
+  var post = request.body;
+  var delex = Object.values(post)
+  var email = path.parse(request.params.email).base;
+  var name = path.parse(request.params.name).base;
+  var date = path.parse(request.params.date).base;
+  console.log('delex', delex)
+  ///limyohan@naver.com/name/이창현/userinformation/exercisebydate/2020.9.9
+  db.collection(`${email}/name/${name}/userinformation/exercisebydate`).doc(`${date}`).get().then((it) => {
+    var d = it.data()
+    var keys = Object.keys(d)
+    // console.log(values)
+    console.log('origin',d)
+    for (i in keys) {
+      var key = keys[i]
+      var values = d[key]
+      if (typeof (values) !== 'string') {
+        for (j in values) {
+          if (delex.includes(values[j])) {
+            var ts = d[key]
+            if (ts.length === 1) {
+              delete d[key]
+            } else {
+              var v = Object.values(ts)
+              var ind = v.indexOf(values[j])
+              v.splice(ind, 1)
+              d[key] = v
+            }
+          }
+        }
+      }
+    }
+    console.log('change',d)
+    db.collection(`${email}/name/${name}/userinformation/exercisebydate`).doc(`${date}`).set(d).then(() => {
+      response.redirect(`/calendar/${email}/${name}`)
+      return(' ')
+    }).catch(()=>{})
+  return(' ')
+  }).catch(()=>{})
+
+})
+
 exports.app = functions.https.onRequest(app);
