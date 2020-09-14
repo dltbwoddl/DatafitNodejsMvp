@@ -15,7 +15,7 @@ const { isNull } = require('util');
 
 //버튼으로 삭제하는 버튼, 같은 내용 운동이면 둘다 삭제 하지만 이용자 입장에서 
 //똑같은 내용을 두번 입력하는 경우는 흔하지 않으므로 굳이 안고쳐도 될듯
-//회원 삭제/복구 만들기.
+//회원 복구 만들기.
 
 const firebaseConfig = {
   apiKey: "AIzaSyB54vr57otWroNRa6W9rb4GJG0swQ1AC3E",
@@ -217,6 +217,7 @@ app.get('/home/:email', (request, response) => {
         <h1>Member List</h1>
         <a href="/home/plus/${filteredId}">회원 추가</a>
     </div>
+    <a href="/restore/${filteredId}">회원 복원</a>
     <div id="content">
         <!---show info of selected member -->
         <div id="show-selected-member" class="d-none">
@@ -283,8 +284,9 @@ app.get('/home/:email', (request, response) => {
             <p>Gender : \${user['sex']}</p>
             <p>weight : \${user['weight']}</p>
             <p>height : \${user['height']}</p>
-            <a href="/calendar/\${link}/\${user['name']}">운동 캘린더</a>
-          </div>\`;
+            <a href="/calendar/${filteredId}/\${user['name']}">운동 캘린더</a>
+            <a href="/deletemember/${filteredId}/\${user['name']}">삭제</a>
+            </div>\`;
 
                     $(infoList).append(infoListItems)
                     $(infoArea).append(infoList);
@@ -330,6 +332,35 @@ app.get('/home/:email', (request, response) => {
   response.send(html)
 })
 
+//회원 삭제하기.
+app.get('/deletemember/:email/:name', (request, response) => {
+  var email = path.parse(request.params.email).base;
+  var name = path.parse(request.params.name).base;
+  db.collection(`${email}`).doc('name').get().then((it) => {
+    var d = it.data()
+    var del = d['del']
+    var existing = d['existing']
+    if (existing.length === 1) {
+      existing = new Array
+    } else {
+      ind = existing.indexOf(name)
+      existing.splice(ind, 1)
+    }
+    del.push(name)
+
+    console.log(del)
+    console.log(existing)
+    d['del'] = del
+    d['existing'] = existing
+    db.collection(`${email}`).doc('name').update(
+      d
+    ).then((it) => {
+      response.redirect(`/home/${email}`)
+      return ('')
+    }).catch(() => { })
+    return (' ')
+  }).catch(() => { })
+})
 //회원 추가하기.
 app.get('/home/plus/:email', (request, response) => {
   var filteredId = path.parse(request.params.email).base;
@@ -357,7 +388,69 @@ app.get('/home/plus/:email', (request, response) => {
   response.send(html)
   return (html)
 });
+//회원 복원하기.
+app.get('/restore/:email',(request,response)=>{
+  var email = path.parse(request.params.email).base;
+  db.collection(`${email}`).doc('name').get().then((it)=>{
+    var d = it.data()
+    var del = d['del']
+    var p = ``
+    for(i in del){
+      var delname=del[i]
+          p +=`<label><input type="checkbox" name="${delname}" value="${delname}"> ${delname}</label>    `
+    }
+    var html = `
+    <!DOCTYPE html>
+<html lang="en">
 
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <form method="post" action="/restore_process/${email}">
+        <p>삭제 목록</p>
+        ${p}
+        <p><input type="submit" value="Submit"></p>
+    </form>
+</body>
+
+</html>
+    `
+    response.send(html)
+    return(' ')
+  }).catch(()=>{})
+})
+app.post("/restore_process/:email",(request,response)=>{
+  var email = path.parse(request.params.email).base;
+  var post = request.body;
+  var value = Object.values(post)
+  db.collection(`${email}`).doc('name').get().then((it)=>{
+    var d = it.data()
+    var del = d['del']
+    var existing = d['existing']
+    for (i in value){
+      if(del.length ===1){
+        del = new Array
+      } else{
+        ind = del.indexOf(value[i])
+        del.splice(ind,1)
+      }
+      existing.push(value[i])
+    }
+    console.log(del)
+    console.log(existing)
+    d['del']=del
+    d['existing']=existing
+    db.collection(`${email}`).doc('name').update(d).then(()=>{
+      response.redirect(`/home/${email}`)
+      return(' ')
+    }).catch(()=>{})
+    return(' ')
+  }).catch(()=>{})
+})
 //추가하기 과정
 app.post('/plus_process/:email', (request, response) => {
   var filteredId = path.parse(request.params.email).base;
