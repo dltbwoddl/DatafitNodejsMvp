@@ -298,7 +298,6 @@
               'existing': new Array()
             }).then(() => {
               db.collection(email).doc('exercisedata').set({
-                'part': { 'partchoice': new Array }
               });
             }).then(() => {
               window.location.href = `./home/${email}`
